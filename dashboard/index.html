@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Scraping Dashboard</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <style>
+      /* Login Page Styles */
+      .form-signin {
+        width: 100%;
+        max-width: 330px;
+        padding: 15px;
+        margin: auto;
+        margin-top: 100px;
+      }
+      .form-signin .form-floating:focus-within {
+        z-index: 2;
+      }
+      .form-signin input[type="text"] {
+        margin-bottom: -1px;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      .form-signin input[type="password"] {
+        margin-bottom: 10px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+      }
+
+      /* Dashboard Styles */
+      body {
+        font-size: 0.875rem;
+      }
+
+      .feather {
+        width: 16px;
+        height: 16px;
+        vertical-align: text-bottom;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        padding: 48px 0 0;
+        box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+      }
+
+      @media (max-width: 767.98px) {
+        .sidebar {
+          top: 5rem;
+        }
+      }
+
+      .sidebar-sticky {
+        position: relative;
+        top: 0;
+        height: calc(100vh - 48px);
+        padding-top: 0.5rem;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .sidebar .nav-link {
+        font-weight: 500;
+        color: #333;
+      }
+
+      .sidebar .nav-link.active {
+        color: #2470dc;
+      }
+
+      .navbar-brand {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+        font-size: 1rem;
+        background-color: rgba(0, 0, 0, 0.25);
+        box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.25);
+      }
+
+      .bi {
+        margin-right: 0.5rem;
+      }
+
+      .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1rem;
+      }
+
+      .table img.img-thumbnail {
+        max-height: 60px;
+      }
+
+      iframe.embed-preview {
+        width: 100%;
+        height: 300px;
+        border: none;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .no-image {
+        width: 60px;
+        height: 60px;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        font-size: 0.8rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="assets/css/js/dashboard.js"></script>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay d-none" id="loading-overlay">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Login Section -->
+    <div id="login-section">
+      <main class="form-signin">
+        <form id="login-form" onsubmit="return false;">
+          <h1 class="h3 mb-3 fw-normal text-center">กรุณาเข้าสู่ระบบ</h1>
+
+          <div id="login-alert" class="alert alert-danger d-none"></div>
+
+          <div class="form-floating mb-3">
+            <input
+              type="text"
+              class="form-control"
+              id="username"
+              placeholder="ชื่อผู้ใช้"
+              required
+            />
+            <label for="username">ชื่อผู้ใช้</label>
+          </div>
+          <div class="form-floating mb-3">
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              placeholder="รหัสผ่าน"
+              required
+            />
+            <label for="password">รหัสผ่าน</label>
+          </div>
+
+          <button
+            class="w-100 btn btn-lg btn-primary"
+            type="submit"
+            id="login-btn"
+          >
+            เข้าสู่ระบบ
+          </button>
+          <p class="mt-5 mb-3 text-muted text-center">
+            &copy; 2025 Web Scraping Dashboard
+          </p>
+        </form>
+      </main>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" class="d-none">
+      <header
+        class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow"
+      >
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#"
+          >Web Scraping Dashboard</a
+        >
+        <button
+          class="navbar-toggler position-absolute d-md-none collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#sidebarMenu"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-nav">
+          <div class="nav-item text-nowrap">
+            <a class="nav-link px-3" href="#" id="logout-btn">ออกจากระบบ</a>
+          </div>
+        </div>
+      </header>
+
+      <div class="container-fluid">
+        <div class="row">
+          <nav
+            id="sidebarMenu"
+            class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse"
+          >
+            <div class="position-sticky pt-3">
+              <ul class="nav flex-column">
+                <li class="nav-item">
+                  <a
+                    class="nav-link active"
+                    href="#"
+                    data-page="main-dashboard"
+                  >
+                    <i class="bi bi-speedometer2"></i>
+                    แดชบอร์ด
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#" data-page="posts">
+                    <i class="bi bi-card-list"></i>
+                    รายการโพสต์ทั้งหมด
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#" data-page="search-replace">
+                    <i class="bi bi-search"></i>
+                    ค้นหาและแทนที่
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#" data-page="api-docs">
+                    <i class="bi bi-file-earmark-code"></i>
+                    API Endpoints
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </nav>
+
+          <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <!-- Dashboard Page -->
+            <div id="main-dashboard" class="dashboard-page">
+              <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+              >
+                <h1 class="h2">แดชบอร์ด</h1>
+              </div>
+
+              <!-- สรุปสถิติ -->
+              <div class="row mb-4">
+                <div class="col-md-4">
+                  <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">โพสต์ทั้งหมด</h5>
+                      <h2 id="total-posts">0</h2>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card bg-success text-white h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">เว็บไซต์ทั้งหมด</h5>
+                      <h2 id="total-sites">0</h2>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="card bg-info text-white h-100">
+                    <div class="card-body">
+                      <h5 class="card-title">โพสต์ใน 7 วัน</h5>
+                      <h2 id="recent-posts-count">0</h2>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ฟอร์มส่ง URL ไปยัง webhook -->
+              <div class="card mb-4">
+                <div class="card-header">
+                  <h4>เพิ่มข้อมูลใหม่</h4>
+                </div>
+                <div class="card-body">
+                  <form id="scrape-form" onsubmit="return false;">
+                    <div class="row g-3">
+                      <div class="col-md-9">
+                        <input
+                          type="url"
+                          class="form-control"
+                          id="scrape-url"
+                          placeholder="ระบุ URL ที่ต้องการเก็บข้อมูล"
+                          required
+                        />
+                      </div>
+                      <div class="col-md-3">
+                        <button
+                          type="submit"
+                          class="btn btn-primary w-100"
+                          id="scrape-button"
+                        >
+                          เก็บข้อมูล
+                        </button>
+                      </div>
+                    </div>
+                    <div id="scrape-result" class="mt-3 d-none"></div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- โพสต์ล่าสุด -->
+              <h4>โพสต์ล่าสุด</h4>
+              <div class="table-responsive mb-4">
+                <table class="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th>Video ID</th>
+                      <th>รูปภาพ</th>
+                      <th>ชื่อเรื่อง</th>
+                      <th>เว็บไซต์</th>
+                      <th>วันที่</th>
+                      <th>การจัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-posts-list">
+                    <tr>
+                      <td colspan="6" class="text-center py-3">
+                        กำลังโหลดข้อมูล...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="text-center">
+                <button class="btn btn-outline-primary" id="view-all-posts-btn">
+                  ดูโพสต์ทั้งหมด
+                </button>
+              </div>
+            </div>
+
+            <!-- Posts Page -->
+            <div id="posts" class="dashboard-page d-none">
+              <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+              >
+                <h1 class="h2">รายการโพสต์ทั้งหมด</h1>
+              </div>
+
+              <!-- ค้นหาโพสต์ -->
+              <div class="card mb-4">
+                <div class="card-body">
+                  <form id="search-posts-form" onsubmit="return false;">
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="search-keyword"
+                          placeholder="คำค้นหา..."
+                        />
+                      </div>
+                      <div class="col-md-4">
+                        <select class="form-select" id="search-site">
+                          <option value="">-- ทุกเว็บไซต์ --</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <button
+                          type="submit"
+                          class="btn btn-primary w-100"
+                          id="search-posts-btn"
+                        >
+                          ค้นหา
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- รายการโพสต์ -->
+              <div class="table-responsive mb-4">
+                <table class="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Video ID</th>
+                      <th>รูปภาพ</th>
+                      <th>ชื่อเรื่อง</th>
+                      <th>เว็บไซต์</th>
+                      <th>วันที่</th>
+                      <th>การจัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="posts-list">
+                    <tr>
+                      <td colspan="7" class="text-center py-3">
+                        กำลังโหลดข้อมูล...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Pagination -->
+              <nav aria-label="Page navigation" id="posts-pagination">
+                <ul class="pagination justify-content-center">
+                  <li class="page-item disabled">
+                    <a
+                      class="page-link"
+                      href="#"
+                      tabindex="-1"
+                      aria-disabled="true"
+                      >ก่อนหน้า</a
+                    >
+                  </li>
+                  <li class="page-item active">
+                    <a class="page-link" href="#">1</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="#">ถัดไป</a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+
+            <!-- Search and Replace Page -->
+            <div id="search-replace" class="dashboard-page d-none">
+              <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+              >
+                <h1 class="h2">ค้นหาและแทนที่</h1>
+              </div>
+
+              <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle"></i>
+                ฟังก์ชันนี้ใช้สำหรับค้นหาและแทนที่ข้อความในฐานข้อมูล
+                ใช้ด้วยความระมัดระวังเนื่องจากการแทนที่จะมีผลกับข้อมูลทั้งหมดที่ตรงกับเงื่อนไข
+              </div>
+
+              <div class="card mb-4">
+                <div class="card-header">
+                  <h4>ค้นหาและแทนที่ข้อความ</h4>
+                </div>
+                <div class="card-body">
+                  <form id="search-replace-form" onsubmit="return false;">
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-6">
+                        <label for="search-text" class="form-label"
+                          >ค้นหา</label
+                        >
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="search-text"
+                          placeholder="คำหรือข้อความที่ต้องการค้นหา"
+                          required
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label for="replace-text" class="form-label"
+                          >แทนที่ด้วย</label
+                        >
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="replace-text"
+                          placeholder="คำหรือข้อความที่ต้องการแทนที่"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label"
+                        >เลือกฟิลด์ที่ต้องการค้นหาและแทนที่</label
+                      >
+                      <div class="row">
+                        <div class="col-md-4">
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              value="title"
+                              id="field_title"
+                              name="fields[]"
+                              checked
+                            />
+                            <label class="form-check-label" for="field_title">
+                              ชื่อเรื่อง
+                            </label>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              value="description"
+                              id="field_description"
+                              name="fields[]"
+                              checked
+                            />
+                            <label
+                              class="form-check-label"
+                              for="field_description"
+                            >
+                              คำอธิบาย
+                            </label>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-check">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              value="tags"
+                              id="field_tags"
+                              name="fields[]"
+                              checked
+                            />
+                            <label class="form-check-label" for="field_tags">
+                              แท็ก
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      id="search-replace-btn"
+                    >
+                      ค้นหาและแทนที่
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <div id="search-replace-result" class="d-none">
+                <div class="card">
+                  <div class="card-header">
+                    <h4>ผลลัพธ์</h4>
+                  </div>
+                  <div class="card-body" id="search-replace-content">
+                    <!-- ผลลัพธ์จะแสดงที่นี่ -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- API Docs Page -->
+            <div id="api-docs" class="dashboard-page d-none">
+              <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
+              >
+                <h1 class="h2">API Endpoints</h1>
+              </div>
+
+              <div class="card mb-4">
+                <div class="card-header">
+                  <h4>รายการ API ที่สามารถใช้งานได้</h4>
+                </div>
+                <div class="card-body">
+                  <h5>รับข้อมูลโพสต์ทั้งหมด</h5>
+                  <div class="input-group mb-3">
+                    <input
+                      type="text"
+                      class="form-control"
+                      value="https://xapi.ngin.cc/api/posts.php"
+                      readonly
+                    />
+                    <button
+                      class="btn btn-outline-secondary copy-btn"
+                      type="button"
+                      data-clipboard="https://xapi.ngin.cc/api/posts.php"
+                    >
+                      คัดลอก
+                    </button>
+                  </div>
+
+                  <h5>รับข้อมูลโพสต์ตาม ID</h5>
+                  <div class="input-group mb-3">
+                    <input
+                      type="text"
+                      class="form-control"
+                      value="https://xapi.ngin.cc/api/posts.php?id=1"
+                      readonly
+                    />
+                    <button
+                      class="btn btn-outline-secondary copy-btn"
+                      type="button"
+                      data-clipboard="https://xapi.ngin.cc/api/posts.php?id=1"
+                    >
+                      คัดลอก
+                    </button>
+                  </div>
+
+                  <h5>รับข้อมูลโพสต์ตาม Video ID</h5>
+                  <div class="input-group mb-3">
+                    <input
+                      type="text"
+                      class="form-control"
+                      value="https://xapi.ngin.cc/api/posts.php?video_id=12345"
+                      readonly
+                    />
+                    <button
+                      class="btn btn-outline-secondary copy-btn"
+                      type="button"
+                      data-clipboard="https://xapi.ngin.cc/api/posts.php?video_id=12345"
+                    >
+                      คัดลอก
+                    </button>
+                  </div>
+
+                  <h5>ค้นหาโพสต์</h5>
+                  <div class="input-group mb-3">
+                    <input
+                      type="text"
+                      class="form-control"
+                      value="https://xapi.ngin.cc/api/posts.php?search=คำค้นหา"
+                      readonly
+                    />
+                    <button
+                      class="btn btn-outline-secondary copy-btn"
+                      type="button"
+                      data-clipboard="https://xapi.ngin.cc/api/posts.php?search=คำค้นหา"
+                    >
+                      คัดลอก
+                    </button>
+                  </div>
+
+                  <h5>เรียกดูโพสต์จากเว็บไซต์เฉพาะ</h5>
+                  <div class="input-group mb-3">
+                    <input
+                      type="text"
+                      class="form-control"
+                      value="https://xapi.ngin.cc/api/posts.php?site=example.com"
+                      readonly
+                    />
+                    <button
+                      class="btn btn-outline-secondary copy-btn"
+                      type="button"
+                      data-clipboard="https://xapi.ngin.cc/api/posts.php?site=example.com"
+                    >
+                      คัดลอก
+                    </button>
+                  </div>
+
+                  <h5>ส่งข้อมูลเพื่อเก็บข้อมูลใหม่</h5>
+                  <div class="input-group mb-3">
+                    <input
+                      type="text"
+                      class="form-control"
+                      value="https://xapi.ngin.cc/api/webhook.php"
+                      readonly
+                    />
+                    <button
+                      class="btn btn-outline-secondary copy-btn"
+                      type="button"
+                      data-clipboard="https://xapi.ngin.cc/api/webhook.php"
+                    >
+                      คัดลอก
+                    </button>
+                  </div>
+                  <pre class="bg-light p-3 mt-2">
+curl -X POST https://xapi.ngin.cc/api/webhook.php \
+-H "Content-Type: application/json" \
+-d '{"url": "https://example.com/page-to-scrape"}'
+                                </pre
+                  >
+
+                  <h5>รับข้อมูลสถิติ</h5>
+                  <div class="input-group mb-3">
+                    <input
+                      type="text"
+                      class="form-control"
+                      value="https://xapi.ngin.cc/api/stats.php"
+                      readonly
+                    />
+                    <button
+                      class="btn btn-outline-secondary copy-btn"
+                      type="button"
+                      data-clipboard="https://xapi.ngin.cc/api/stats.php"
+                    >
+                      คัดลอก
+                    </button>
+                  </div>
+
+                  <h5>รับรายชื่อเว็บไซต์</h5>
+                  <div class="input-group mb-3">
+                    <input
+                      type="text"
+                      class="form-control"
+                      value="https://xapi.ngin.cc/api/sites.php"
+                      readonly
+                    />
+                    <button
+                      class="btn btn-outline-secondary copy-btn"
+                      type="button"
+                      data-clipboard="https://xapi.ngin.cc/api/sites.php"
+                    >
+                      คัดลอก
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <!-- Post View Modal -->
+    <div
+      class="modal fade"
+      id="postViewModal"
+      tabindex="-1"
+      aria-labelledby="postViewModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="postViewModalLabel">รายละเอียดโพสต์</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="post-view-content">
+            <div class="text-center">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">กำลังโหลด...</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              ปิด
+            </button>
+            <a href="#" class="btn btn-warning" id="edit-post-link">แก้ไข</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Post Edit Modal -->
+    <div
+      class="modal fade"
+      id="postEditModal"
+      tabindex="-1"
+      aria-labelledby="postEditModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="postEditModalLabel">แก้ไขโพสต์</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="edit-post-form">
+              <input type="hidden" id="edit-post-id" />
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="edit-video-id" class="form-label">Video ID</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="edit-video-id"
+                    readonly
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="edit-site-name" class="form-label"
+                    >เว็บไซต์</label
+                  >
+                  <input type="text" class="form-control" id="edit-site-name" />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="edit-title" class="form-label">ชื่อเรื่อง</label>
+                <input type="text" class="form-control" id="edit-title" />
+              </div>
+
+              <div class="mb-3">
+                <label for="edit-description" class="form-label"
+                  >คำอธิบาย</label
+                >
+                <textarea
+                  class="form-control"
+                  id="edit-description"
+                  rows="5"
+                ></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label for="edit-url" class="form-label">URL</label>
+                <input type="url" class="form-control" id="edit-url" />
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="edit-thumbnail-url" class="form-label"
+                    >URL รูปภาพ</label
+                  >
+                  <input
+                    type="url"
+                    class="form-control"
+                    id="edit-thumbnail-url"
+                  />
+                  <div id="thumbnail-preview" class="mt-2"></div>
+                </div>
+                <div class="col-md-6">
+                  <label for="edit-embed-url" class="form-label"
+                    >URL สำหรับฝังวิดีโอ</label
+                  >
+                  <input type="url" class="form-control" id="edit-embed-url" />
+                  <div id="embed-preview" class="mt-2"></div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="edit-tags" class="form-label"
+                  >แท็ก (คั่นด้วยเครื่องหมายจุลภาค)</label
+                >
+                <input type="text" class="form-control" id="edit-tags" />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              ยกเลิก
+            </button>
+            <button type="button" class="btn btn-primary" id="save-post-btn">
+              บันทึก
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div
+      class="modal fade"
+      id="confirmModal"
+      tabindex="-1"
+      aria-labelledby="confirmModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmModalLabel">
+              ยืนยันการดำเนินการ
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="confirm-modal-body">
+            คุณต้องการดำเนินการนี้ใช่หรือไม่?
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="confirm-action-btn"
+            >
+              ยืนยัน
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // API URL
+        const API_BASE_URL = "https://xapi.ngin.cc/api";
+        const LOGIN_API = "https://api.ngin.cc/login";
+
+        // DOM elements
+        const loginSection = document.getElementById("login-section");
+        const dashboardSection = document.getElementById("dashboard-section");
+        const loginAlert = document.getElementById("login-alert");
+        const loginForm = document.getElementById("login-form");
+        const loginBtn = document.getElementById("login-btn");
+        const logoutBtn = document.getElementById("logout-btn");
+        const loadingOverlay = document.getElementById("loading-overlay");
+
+        // Dashboard elements
+        const totalPostsElement = document.getElementById("total-posts");
+        const totalSitesElement = document.getElementById("total-sites");
+        const recentPostsCountElement =
+          document.getElementById("recent-posts-count");
+        const recentPostsList = document.getElementById("recent-posts-list");
+
+        // Scrape form
+        const scrapeForm = document.getElementById("scrape-form");
+        const scrapeUrl = document.getElementById("scrape-url");
+        const scrapeButton = document.getElementById("scrape-button");
+        const scrapeResult = document.getElementById("scrape-result");
+
+        // Posts page
+        const viewAllPostsBtn = document.getElementById("view-all-posts-btn");
+        const searchPostsForm = document.getElementById("search-posts-form");
+        const searchKeyword = document.getElementById("search-keyword");
+        const searchSite = document.getElementById("search-site");
+        const searchPostsBtn = document.getElementById("search-posts-btn");
+        const postsList = document.getElementById("posts-list");
+        const postsPagination = document.getElementById("posts-pagination");
+
+        // Search and replace
+        const searchReplaceForm = document.getElementById(
+          "search-replace-form"
+        );
+        const searchReplaceBtn = document.getElementById("search-replace-btn");
+        const searchReplaceResult = document.getElementById(
+          "search-replace-result"
+        );
+        const searchReplaceContent = document.getElementById(
+          "search-replace-content"
+        );
+
+        // Modals
+        const postViewModal = new bootstrap.Modal(
+          document.getElementById("postViewModal")
+        );
+        const postEditModal = new bootstrap.Modal(
+          document.getElementById("postEditModal")
+        );
+        const confirmModal = new bootstrap.Modal(
+          document.getElementById("confirmModal")
+        );
+        const confirmActionBtn = document.getElementById("confirm-action-btn");
+
+        // Current state
+        let currentPostsPage = 1;
+        let currentPosts = [];
+        let totalPages = 1;
+        let postsPerPage = 20;
+
+        // Check if user is logged in
+        const checkAuth = function () {
+          const token = localStorage.getItem("auth_token");
+
+          if (token) {
+            showDashboard();
+            loadDashboardData();
+          }
+        };
+
+        // Show loading overlay
+        const showLoading = function () {
+          loadingOverlay.classList.remove("d-none");
+        };
+
+        // Hide loading overlay
+        const hideLoading = function () {
+          loadingOverlay.classList.add("d-none");
+        };
+
+        // Format date function
+        const formatDate = function (dateString) {
+          const date = new Date(dateString);
+          return date.toLocaleDateString("th-TH", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        };
+
+        // Login form submission
+        loginForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+
+          // Basic validation
+          if (!username || !password) {
+            loginAlert.textContent = "กรุณากรอกชื่อผู้ใช้และรหัสผ่าน";
+            loginAlert.classList.remove("d-none");
+            return;
+          }
+
+          showLoading();
+
+          // For demonstration purposes - in real world, this would call the API
+          if (username === "admin" && password === "Man@1997") {
+            // Store token (in real app would come from server)
+            localStorage.setItem("auth_token", "dummy_token");
+
+            setTimeout(() => {
+              hideLoading();
+              showDashboard();
+              loadDashboardData();
+            }, 1000);
+          } else {
+            setTimeout(() => {
+              hideLoading();
+              loginAlert.textContent = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
+              loginAlert.classList.remove("d-none");
+            }, 1000);
+          }
+        });
+
+        // Logout button
+        logoutBtn.addEventListener("click", function () {
+          localStorage.removeItem("auth_token");
+          hideDashboard();
+        });
+
+        // Load dashboard data
+        const loadDashboardData = function () {
+          showLoading();
+
+          // Fetch stats
+          fetch(`${API_BASE_URL}/stats.php`)
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                const stats = data.data;
+
+                // Update stats
+                totalPostsElement.textContent = stats.total_posts;
+                totalSitesElement.textContent = stats.total_sites;
+                recentPostsCountElement.textContent = stats.recent_posts;
+
+                // Update recent posts list
+                updateRecentPostsList(stats.recent_posts_list);
+              } else {
+                // Fallback data in case API fails
+                totalPostsElement.textContent = "0";
+                totalSitesElement.textContent = "0";
+                recentPostsCountElement.textContent = "0";
+                recentPostsList.innerHTML =
+                  '<tr><td colspan="6" class="text-center py-3">ไม่พบข้อมูล</td></tr>';
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching stats:", error);
+
+              // Fallback data in case API fails
+              totalPostsElement.textContent = "0";
+              totalSitesElement.textContent = "0";
+              recentPostsCountElement.textContent = "0";
+              recentPostsList.innerHTML =
+                '<tr><td colspan="6" class="text-center py-3">ไม่พบข้อมูล</td></tr>';
+            })
+            .finally(() => {
+              hideLoading();
+            });
+
+          // Load sites for dropdown
+          loadSites();
+        };
+
+        // Update recent posts list
+        const updateRecentPostsList = function (posts) {
+          if (!posts || posts.length === 0) {
+            recentPostsList.innerHTML =
+              '<tr><td colspan="6" class="text-center py-3">ไม่พบข้อมูล</td></tr>';
+            return;
+          }
+
+          let html = "";
+
+          posts.forEach((post) => {
+            // Format thumbnail
+            let thumbnailHtml = '<div class="no-image">ไม่มีรูปภาพ</div>';
+            if (post.thumbnail_url) {
+              thumbnailHtml = `<img src="${post.thumbnail_url}" alt="${post.title}" class="img-thumbnail" width="60">`;
+            }
+
+            html += `
+                <tr>
+                    <td>${post.video_id || "-"}</td>
+                    <td>${thumbnailHtml}</td>
+                    <td>${post.title}</td>
+                    <td>${post.site_name || "-"}</td>
+                    <td>${formatDate(post.created_at)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info view-post-btn" data-id="${
+                          post.id
+                        }">ดู</button>
+                        <button class="btn btn-sm btn-warning edit-post-btn" data-id="${
+                          post.id
+                        }">แก้ไข</button>
+                    </td>
+                </tr>
+                `;
+          });
+
+          recentPostsList.innerHTML = html;
+
+          // Add event listeners to view and edit buttons
+          document.querySelectorAll(".view-post-btn").forEach((button) => {
+            button.addEventListener("click", viewPost);
+          });
+
+          document.querySelectorAll(".edit-post-btn").forEach((button) => {
+            button.addEventListener("click", editPost);
+          });
+        };
+
+        // Load sites for dropdown
+        const loadSites = function () {
+          fetch(`${API_BASE_URL}/sites.php`)
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                const sites = data.data;
+
+                // Update select options
+                let optionsHtml = '<option value="">-- ทุกเว็บไซต์ --</option>';
+
+                sites.forEach((site) => {
+                  optionsHtml += `<option value="${site}">${site}</option>`;
+                });
+
+                searchSite.innerHTML = optionsHtml;
+              } else {
+                // Fallback in case API fails
+                searchSite.innerHTML =
+                  '<option value="">-- ทุกเว็บไซต์ --</option>';
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching sites:", error);
+
+              // Fallback in case API fails
+              searchSite.innerHTML =
+                '<option value="">-- ทุกเว็บไซต์ --</option>';
+            });
+        };
+
+        // Load posts with pagination
+        const loadPosts = function (page = 1, search = "", site = "") {
+          showLoading();
+
+          // Update current state
+          currentPostsPage = page;
+
+          // Build URL with parameters
+          let url = `${API_BASE_URL}/posts.php?page=${page}&limit=${postsPerPage}`;
+
+          if (search) {
+            url += `&search=${encodeURIComponent(search)}`;
+          }
+
+          if (site) {
+            url += `&site=${encodeURIComponent(site)}`;
+          }
+
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                // Store pagination data
+                totalPages = data.pagination.last_page;
+                currentPosts = data.data;
+
+                // Update posts list
+                updatePostsList(data.data);
+
+                // Update pagination
+                updatePagination(data.pagination);
+              } else {
+                postsList.innerHTML =
+                  '<tr><td colspan="7" class="text-center py-3">ไม่พบข้อมูล</td></tr>';
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching posts:", error);
+              postsList.innerHTML =
+                '<tr><td colspan="7" class="text-center py-3">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+            })
+            .finally(() => {
+              hideLoading();
+            });
+        };
+
+        // Update posts list
+        const updatePostsList = function (posts) {
+          if (!posts || posts.length === 0) {
+            postsList.innerHTML =
+              '<tr><td colspan="7" class="text-center py-3">ไม่พบข้อมูล</td></tr>';
+            return;
+          }
+
+          let html = "";
+
+          posts.forEach((post) => {
+            // Format thumbnail
+            let thumbnailHtml = '<div class="no-image">ไม่มีรูปภาพ</div>';
+            if (post.thumbnail_url) {
+              thumbnailHtml = `<img src="${post.thumbnail_url}" alt="${post.title}" class="img-thumbnail" width="60">`;
+            }
+
+            html += `
+                <tr>
+                    <td>${post.id}</td>
+                    <td>${post.video_id || "-"}</td>
+                    <td>${thumbnailHtml}</td>
+                    <td>${post.title}</td>
+                    <td>${post.site_name || "-"}</td>
+                    <td>${formatDate(post.created_at)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info view-post-btn" data-id="${
+                          post.id
+                        }">ดู</button>
+                        <button class="btn btn-sm btn-warning edit-post-btn" data-id="${
+                          post.id
+                        }">แก้ไข</button>
+                        <button class="btn btn-sm btn-danger delete-post-btn" data-id="${
+                          post.id
+                        }">ลบ</button>
+                    </td>
+                </tr>
+                `;
+          });
+
+          postsList.innerHTML = html;
+
+          // Add event listeners to view, edit and delete buttons
+          document.querySelectorAll(".view-post-btn").forEach((button) => {
+            button.addEventListener("click", viewPost);
+          });
+
+          document.querySelectorAll(".edit-post-btn").forEach((button) => {
+            button.addEventListener("click", editPost);
+          });
+
+          document.querySelectorAll(".delete-post-btn").forEach((button) => {
+            button.addEventListener("click", confirmDeletePost);
+          });
+        };
+
+        // Update pagination
+        const updatePagination = function (pagination) {
+          let html = "";
+
+          // Previous button
+          if (pagination.current_page > 1) {
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${
+                      pagination.current_page - 1
+                    }">ก่อนหน้า</a>
+                </li>
+                `;
+          } else {
+            html += `
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">ก่อนหน้า</a>
+                </li>
+                `;
+          }
+
+          // Page numbers
+          const startPage = Math.max(1, pagination.current_page - 2);
+          const endPage = Math.min(
+            pagination.last_page,
+            pagination.current_page + 2
+          );
+
+          for (let i = startPage; i <= endPage; i++) {
+            if (i === pagination.current_page) {
+              html += `<li class="page-item active"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+            } else {
+              html += `<li class="page-item"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+            }
+          }
+
+          // Next button
+          if (pagination.current_page < pagination.last_page) {
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${
+                      pagination.current_page + 1
+                    }">ถัดไป</a>
+                </li>
+                `;
+          } else {
+            html += `
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">ถัดไป</a>
+                </li>
+                `;
+          }
+
+          postsPagination.querySelector("ul").innerHTML = html;
+
+          // Add event listeners to pagination links
+          document
+            .querySelectorAll(
+              '#posts-pagination .page-link:not([aria-disabled="true"])'
+            )
+            .forEach((link) => {
+              link.addEventListener("click", function (e) {
+                e.preventDefault();
+                const page = parseInt(this.getAttribute("data-page"));
+                loadPosts(page, searchKeyword.value, searchSite.value);
+              });
+            });
+        };
+
+        // View post
+        const viewPost = function (e) {
+          const postId = this.getAttribute("data-id");
+          showLoading();
+
+          fetch(`${API_BASE_URL}/posts.php?id=${postId}`)
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                const post = data.data;
+
+                // Format thumbnail
+                let thumbnailHtml = "<p>ไม่มีรูปภาพ</p>";
+                if (post.thumbnail_url) {
+                  thumbnailHtml = `<img src="${post.thumbnail_url}" alt="${post.title}" class="img-fluid mb-3">`;
+                }
+
+                // Format embed
+                let embedHtml = "<p>ไม่มีวิดีโอหรือวิดีโอไม่สามารถฝังได้</p>";
+                if (post.embedURL) {
+                  embedHtml = `<iframe src="${post.embedURL}" class="embed-preview mb-3" allowfullscreen></iframe>`;
+                }
+
+                // Format tags
+                let tagsHtml = "<p>ไม่มีแท็ก</p>";
+                if (post.tags) {
+                  const tags = post.tags.split(",").map((tag) => tag.trim());
+                  tagsHtml = tags
+                    .map(
+                      (tag) =>
+                        `<span class="badge bg-secondary me-1">${tag}</span>`
+                    )
+                    .join(" ");
+                }
+
+                const html = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>ข้อมูลทั่วไป</h4>
+                                <table class="table">
+                                    <tr>
+                                        <th>ID</th>
+                                        <td>${post.id}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Video ID</th>
+                                        <td>${post.video_id || "-"}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>ชื่อเรื่อง</th>
+                                        <td>${post.title}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>เว็บไซต์</th>
+                                        <td>${post.site_name || "-"}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>URL</th>
+                                        <td><a href="${
+                                          post.url
+                                        }" target="_blank">${post.url}</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>วันที่</th>
+                                        <td>${formatDate(post.created_at)}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>แท็ก</th>
+                                        <td>${tagsHtml}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h4>รูปภาพ</h4>
+                                ${thumbnailHtml}
+                                <div class="mb-2">
+                                    <a href="${post.thumbnail_url}" download="${
+                  post.video_id
+                }.jpg" class="btn btn-sm btn-secondary ${
+                  !post.thumbnail_url ? "disabled" : ""
+                }">
+                                        <i class="bi bi-download"></i> ดาวน์โหลดรูปภาพ
+                                    </a>
+                                </div>
+                                
+                                <h4>วิดีโอ</h4>
+                                ${embedHtml}
+                            </div>
+                        </div>
+                        
+                        <h4>คำอธิบาย</h4>
+                        <div class="p-3 bg-light mb-3">
+                            ${post.description || "<p>ไม่มีคำอธิบาย</p>"}
+                        </div>
+                        `;
+
+                document.getElementById("post-view-content").innerHTML = html;
+                document
+                  .getElementById("edit-post-link")
+                  .setAttribute("data-id", post.id);
+
+                // Show modal
+                postViewModal.show();
+              } else {
+                alert("ไม่พบข้อมูลโพสต์");
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching post:", error);
+              alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+            })
+            .finally(() => {
+              hideLoading();
+            });
+        };
+
+        // Edit post link in view modal
+        document
+          .getElementById("edit-post-link")
+          .addEventListener("click", function (e) {
+            e.preventDefault();
+            const postId = this.getAttribute("data-id");
+
+            // Hide view modal
+            postViewModal.hide();
+
+            // Find edit button with same post ID and trigger click
+            const editBtn = document.querySelector(
+              `.edit-post-btn[data-id="${postId}"]`
+            );
+            if (editBtn) {
+              editBtn.click();
+            }
+          });
+
+        // Edit post
+        const editPost = function (e) {
+          const postId = this.getAttribute("data-id");
+          showLoading();
+
+          fetch(`${API_BASE_URL}/posts.php?id=${postId}`)
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                const post = data.data;
+
+                // Fill form fields
+                document.getElementById("edit-post-id").value = post.id;
+                document.getElementById("edit-video-id").value =
+                  post.video_id || "";
+                document.getElementById("edit-site-name").value =
+                  post.site_name || "";
+                document.getElementById("edit-title").value = post.title || "";
+                document.getElementById("edit-description").value =
+                  post.description || "";
+                document.getElementById("edit-url").value = post.url || "";
+                document.getElementById("edit-thumbnail-url").value =
+                  post.thumbnail_url || "";
+                document.getElementById("edit-embed-url").value =
+                  post.embedURL || "";
+                document.getElementById("edit-tags").value = post.tags || "";
+
+                // Preview thumbnail
+                const thumbnailPreview =
+                  document.getElementById("thumbnail-preview");
+                if (post.thumbnail_url) {
+                  thumbnailPreview.innerHTML = `<img src="${post.thumbnail_url}" alt="Thumbnail Preview" class="img-thumbnail" style="max-height: 100px;">`;
+                } else {
+                  thumbnailPreview.innerHTML = "";
+                }
+
+                // Preview embed
+                const embedPreview = document.getElementById("embed-preview");
+                if (post.embedURL) {
+                  embedPreview.innerHTML = `<iframe src="${post.embedURL}" class="embed-preview" style="height: 150px;"></iframe>`;
+                } else {
+                  embedPreview.innerHTML = "";
+                }
+
+                // Show modal
+                postEditModal.show();
+              } else {
+                alert("ไม่พบข้อมูลโพสต์");
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching post:", error);
+              alert("เกิดข้อผิดพลาดในการโหลดข้อมูล");
+            })
+            .finally(() => {
+              hideLoading();
+            });
+        };
+
+        // Live preview for thumbnail and embed
+        document
+          .getElementById("edit-thumbnail-url")
+          .addEventListener("change", function () {
+            const thumbnailPreview =
+              document.getElementById("thumbnail-preview");
+            if (this.value) {
+              thumbnailPreview.innerHTML = `<img src="${this.value}" alt="Thumbnail Preview" class="img-thumbnail" style="max-height: 100px;">`;
+            } else {
+              thumbnailPreview.innerHTML = "";
+            }
+          });
+
+        document
+          .getElementById("edit-embed-url")
+          .addEventListener("change", function () {
+            const embedPreview = document.getElementById("embed-preview");
+            if (this.value) {
+              embedPreview.innerHTML = `<iframe src="${this.value}" class="embed-preview" style="height: 150px;"></iframe>`;
+            } else {
+              embedPreview.innerHTML = "";
+            }
+          });
+
+        // Save post
+        document
+          .getElementById("save-post-btn")
+          .addEventListener("click", function () {
+            const postId = document.getElementById("edit-post-id").value;
+
+            // Get form data
+            const formData = {
+              id: postId,
+              site_name: document.getElementById("edit-site-name").value,
+              title: document.getElementById("edit-title").value,
+              description: document.getElementById("edit-description").value,
+              url: document.getElementById("edit-url").value,
+              thumbnail_url:
+                document.getElementById("edit-thumbnail-url").value,
+              embedURL: document.getElementById("edit-embed-url").value,
+              tags: document.getElementById("edit-tags").value,
+            };
+
+            showLoading();
+
+            fetch(`${API_BASE_URL}/posts.php`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.success) {
+                  alert("บันทึกข้อมูลเรียบร้อย");
+                  postEditModal.hide();
+
+                  // Refresh data
+                  loadPosts(
+                    currentPostsPage,
+                    searchKeyword.value,
+                    searchSite.value
+                  );
+                  loadDashboardData();
+                } else {
+                  alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + data.message);
+                }
+              })
+              .catch((error) => {
+                console.error("Error saving post:", error);
+                alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+              })
+              .finally(() => {
+                hideLoading();
+              });
+          });
+
+        // Confirm delete post
+        const confirmDeletePost = function () {
+          const postId = this.getAttribute("data-id");
+          const post = currentPosts.find((p) => p.id == postId);
+
+          if (post) {
+            document.getElementById("confirm-modal-body").innerHTML = `
+                <p>คุณต้องการลบโพสต์ <strong>"${post.title}"</strong> ใช่หรือไม่?</p>
+                <p class="text-danger">คำเตือน: การดำเนินการนี้ไม่สามารถยกเลิกได้!</p>
+                `;
+
+            // Store post ID in confirm button
+            confirmActionBtn.setAttribute("data-action", "delete-post");
+            confirmActionBtn.setAttribute("data-id", postId);
+
+            confirmModal.show();
+          }
+        };
+
+        // Confirm action button
+        confirmActionBtn.addEventListener("click", function () {
+          const action = this.getAttribute("data-action");
+
+          if (action === "delete-post") {
+            const postId = this.getAttribute("data-id");
+            deletePost(postId);
+            confirmModal.hide();
+          } else if (action === "search-replace") {
+            const searchText = document.getElementById("search-text").value;
+            const replaceText = document.getElementById("replace-text").value;
+
+            // Get selected fields
+            const selectedFields = [];
+            document
+              .querySelectorAll('input[name="fields[]"]:checked')
+              .forEach((checkbox) => {
+                selectedFields.push(checkbox.value);
+              });
+
+            searchAndReplace(searchText, replaceText, selectedFields);
+            confirmModal.hide();
+          }
+        });
+
+        // Delete post
+        const deletePost = function (postId) {
+          showLoading();
+
+          fetch(`${API_BASE_URL}/posts.php?id=${postId}`, {
+            method: "DELETE",
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                alert("ลบโพสต์เรียบร้อย");
+
+                // Refresh data
+                loadPosts(
+                  currentPostsPage,
+                  searchKeyword.value,
+                  searchSite.value
+                );
+                loadDashboardData();
+              } else {
+                alert("เกิดข้อผิดพลาดในการลบโพสต์: " + data.message);
+              }
+            })
+            .catch((error) => {
+              console.error("Error deleting post:", error);
+              alert("เกิดข้อผิดพลาดในการลบโพสต์");
+            })
+            .finally(() => {
+              hideLoading();
+            });
+        };
+
+        // Search and replace
+        const searchAndReplace = function (searchText, replaceText, fields) {
+          if (!searchText) {
+            alert("กรุณาระบุคำค้นหา");
+            return;
+          }
+
+          showLoading();
+
+          const data = {
+            search: searchText,
+            replace: replaceText,
+            fields: fields,
+          };
+
+          fetch(`${API_BASE_URL}/search-replace.php`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                searchReplaceResult.classList.remove("d-none");
+                searchReplaceContent.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5><i class="bi bi-check-circle"></i> ดำเนินการเรียบร้อย</h5>
+                            <p>${data.message}</p>
+                            <p>จำนวนข้อมูลที่ถูกแทนที่: <strong>${data.count}</strong> รายการ</p>
+                        </div>
+                        `;
+
+                // Refresh posts if on posts page
+                if (
+                  !document.getElementById("posts").classList.contains("d-none")
+                ) {
+                  loadPosts(
+                    currentPostsPage,
+                    searchKeyword.value,
+                    searchSite.value
+                  );
+                }
+              } else {
+                searchReplaceResult.classList.remove("d-none");
+                searchReplaceContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h5><i class="bi bi-exclamation-triangle"></i> เกิดข้อผิดพลาด</h5>
+                            <p>${data.message}</p>
+                        </div>
+                        `;
+              }
+            })
+            .catch((error) => {
+              console.error("Error performing search and replace:", error);
+              searchReplaceResult.classList.remove("d-none");
+              searchReplaceContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5><i class="bi bi-exclamation-triangle"></i> เกิดข้อผิดพลาด</h5>
+                        <p>ไม่สามารถดำเนินการได้ กรุณาลองอีกครั้ง</p>
+                    </div>
+                    `;
+            })
+            .finally(() => {
+              hideLoading();
+            });
+        };
+
+        // Scrape form submission
+        scrapeForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const url = scrapeUrl.value;
+
+          if (!url) {
+            return;
+          }
+
+          // Show loading
+          scrapeButton.disabled = true;
+          scrapeButton.innerHTML =
+            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> กำลังดำเนินการ...';
+          scrapeResult.innerHTML =
+            '<div class="alert alert-info">กำลังส่งคำขอไปยัง webhook...</div>';
+          scrapeResult.classList.remove("d-none");
+
+          // Call webhook API
+          fetch(`${API_BASE_URL}/webhook.php`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url: url }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                scrapeResult.innerHTML = `<div class="alert alert-success">เก็บข้อมูลเรียบร้อยแล้ว!</div>`;
+
+                // Refresh dashboard data
+                loadDashboardData();
+              } else {
+                scrapeResult.innerHTML = `<div class="alert alert-success">ส่งข้อมูลเรียบร้อย: ${
+                  data.message || "Workflow started"
+                }</div>`;
+              }
+            })
+            .catch((error) => {
+              console.error("Error calling webhook:", error);
+              scrapeResult.innerHTML = `<div class="alert alert-danger">เกิดข้อผิดพลาดในการส่งคำขอ กรุณาลองอีกครั้ง</div>`;
+            })
+            .finally(() => {
+              scrapeUrl.value = "";
+              scrapeButton.disabled = false;
+              scrapeButton.innerHTML = "เก็บข้อมูล";
+
+              // ซ่อนผลลัพธ์หลังจาก 5 วินาที
+              setTimeout(function () {
+                scrapeResult.classList.add("d-none");
+              }, 5000);
+            });
+        });
+
+        // View all posts button
+        viewAllPostsBtn.addEventListener("click", function () {
+          // Switch to posts page
+          document.querySelector('.nav-link[data-page="posts"]').click();
+        });
+
+        // Search posts form
+        searchPostsForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          loadPosts(1, searchKeyword.value, searchSite.value);
+        });
+
+        // Search and replace form
+        searchReplaceForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const searchText = document.getElementById("search-text").value;
+          const replaceText = document.getElementById("replace-text").value;
+
+          if (!searchText) {
+            alert("กรุณาระบุคำค้นหา");
+            return;
+          }
+
+          // Get selected fields
+          const selectedFields = [];
+          document
+            .querySelectorAll('input[name="fields[]"]:checked')
+            .forEach((checkbox) => {
+              selectedFields.push(checkbox.value);
+            });
+
+          if (selectedFields.length === 0) {
+            alert("กรุณาเลือกอย่างน้อย 1 ฟิลด์");
+            return;
+          }
+
+          // คำนวณข้อความที่เลือกฟิลด์
+          let selectedFieldNames = [];
+          document
+            .querySelectorAll('input[name="fields[]"]:checked')
+            .forEach(function (checkbox) {
+              selectedFieldNames.push(
+                checkbox.nextElementSibling.textContent.trim()
+              );
+            });
+
+          // แสดง modal ยืนยัน
+          document.getElementById("confirm-modal-body").innerHTML = `
+                <p>คุณต้องการค้นหา <strong>"${searchText}"</strong> และแทนที่ด้วย <strong>"${replaceText}"</strong> ในฟิลด์ต่อไปนี้:</p>
+                <ul>
+                    ${selectedFieldNames
+                      .map((field) => `<li>${field}</li>`)
+                      .join("")}
+                </ul>
+                <p class="text-danger">คำเตือน: การดำเนินการนี้จะมีผลกับข้อมูลทั้งหมดที่ตรงกับเงื่อนไข และไม่สามารถเรียกคืนได้!</p>
+            `;
+
+          // Store action in confirm button
+          confirmActionBtn.setAttribute("data-action", "search-replace");
+
+          confirmModal.show();
+        });
+
+        // Navigation
+        document.querySelectorAll(".nav-link[data-page]").forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+
+            // Update active link
+            document
+              .querySelectorAll(".nav-link")
+              .forEach((l) => l.classList.remove("active"));
+            this.classList.add("active");
+
+            // Show corresponding page
+            const pageId = this.getAttribute("data-page");
+            document.querySelectorAll(".dashboard-page").forEach((page) => {
+              page.classList.add("d-none");
+            });
+            document.getElementById(pageId).classList.remove("d-none");
+
+            // Load data for specific pages
+            if (pageId === "posts") {
+              loadPosts(1, "", "");
+            }
+          });
+        });
+
+        // Copy to clipboard buttons
+        document.querySelectorAll(".copy-btn").forEach((button) => {
+          button.addEventListener("click", function () {
+            const text = this.getAttribute("data-clipboard");
+
+            navigator.clipboard.writeText(text).then(() => {
+              // Save original text
+              const originalText = this.textContent;
+
+              // Change button text
+              this.textContent = "คัดลอกแล้ว!";
+
+              // Change back after 2 seconds
+              setTimeout(() => {
+                this.textContent = originalText;
+              }, 2000);
+            });
+          });
+        });
+
+        // Function to show dashboard
+        function showDashboard() {
+          loginSection.classList.add("d-none");
+          dashboardSection.classList.remove("d-none");
+        }
+
+        // Function to hide dashboard
+        function hideDashboard() {
+          dashboardSection.classList.add("d-none");
+          loginSection.classList.remove("d-none");
+        }
+
+        // Initial check for authentication
+        checkAuth();
+      });
+    </script>
+
+    <!-- Extract Video Section -->
+    <div style="margin: 20px">
+      <input
+        type="text"
+        id="iframe_url"
+        placeholder="Enter iframe embed URL"
+        style="width: 60%; padding: 8px"
+      />
+      <input
+        type="text"
+        id="video_id"
+        placeholder="Enter video ID"
+        style="width: 20%; padding: 8px"
+      />
+      <button onclick="extractVideo()" style="padding: 8px 16px">
+        🎬 Extract Video
+      </button>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: scraping_db
+      MYSQL_USER: scraper
+      MYSQL_PASSWORD: scraperpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init:/docker-entrypoint-initdb.d
+      - ./mysql-config/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    networks:
+      - scraping-network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      - PMA_HOST=mysql-db
+      - PMA_PORT=3306
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - PMA_USER=root
+      - PMA_PASSWORD=rootpassword
+      - UPLOAD_LIMIT=300M
+    ports:
+      - "8080:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - scraping-network
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://n8n.ngin.cc
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-a-random-32-character-string}
+      - DB_TYPE=mysqldb
+      - DB_MYSQLDB_HOST=mysql-db
+      - DB_MYSQLDB_PORT=3306
+      - DB_MYSQLDB_DATABASE=n8n_db
+      - DB_MYSQLDB_USER=scraper
+      - DB_MYSQLDB_PASSWORD=scraperpassword
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - scraping-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  dashboard:
+    image: php:8.0-apache
+    container_name: dashboard
+    restart: always
+    volumes:
+      - ./dashboard:/var/www/html
+    ports:
+      - "8088:80"
+    networks:
+      - scraping-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      bash -c "docker-php-ext-install mysqli pdo pdo_mysql &&
+              a2enmod rewrite &&
+              apache2-foreground"
+
+  backup:
+    image: databack/mysql-backup
+    container_name: mysql-backup
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+    environment:
+      - DB_DUMP_TARGET=/backup
+      - DB_USER=root
+      - DB_PASS=rootpassword
+      - DB_DUMP_FREQ=1440
+      - DB_DUMP_BEGIN=0000
+      - DB_SERVER=mysql-db
+    volumes:
+      - ./backups:/backup
+    networks:
+      - scraping-network
+
+  extractor:
+    build: ./dashboard/backend
+    container_name: extractor
+    ports:
+      - "8010:8000"
+    volumes:
+      - ./video:/app/video
+    networks:
+      - scraping-network
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: always
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=eyJhIjoiYTE4MmE4NWEyMTIxZjJlN2E4MGViY2EyNmEwMDg2NDYiLCJ0IjoiNjE0Mjk4Y2YtZDNmZS00NDU2LWFiMjYtODU3NTE1YTIwNzA5IiwicyI6Ik9XSXdOalUxTmpFdE1tUTBNaTAwWVRka0xUazVOR1F0TldGbFlqWmlNVE5tWXpFNSJ9
+    networks:
+      - scraping-network
+
+networks:
+  scraping-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  n8n_data:
+  phpmyadmin_data:

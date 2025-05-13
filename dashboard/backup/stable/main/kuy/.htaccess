@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # ไม่ทำการ redirect ถ้าไฟล์มีอยู่จริง
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # ถ้าเข้าถึง /login.php ให้ redirect ไปยัง index.php
+    RewriteRule ^login\.php$ index.php [L,R=301]
+    
+    # ถ้าเข้าถึง /dashboard.php ให้ redirect ไปยัง index.php
+    RewriteRule ^dashboard\.php$ index.php [L,R=301]
+</IfModule>

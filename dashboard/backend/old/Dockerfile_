@@ -1,0 +1,28 @@
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y \
+    wget unzip curl gnupg ffmpeg xdg-utils \
+    fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 \
+    libnspr4 libnss3 libxss1 libgbm1 libgtk-3-0 libu2f-udev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Chrome for Testing 114
+RUN wget https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/114.0.5735.90/linux64/chrome-linux64.zip && \
+    unzip chrome-linux64.zip && mv chrome-linux64 /opt/chrome && \
+    ln -s /opt/chrome/chrome /usr/bin/google-chrome && \
+    rm chrome-linux64.zip
+
+# Install ChromeDriver 114
+RUN wget https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/114.0.5735.90/linux64/chromedriver-linux64.zip && \
+    unzip chromedriver-linux64.zip && mv chromedriver-linux64/chromedriver /usr/local/bin/ && \
+    chmod +x /usr/local/bin/chromedriver && \
+    rm -rf chromedriver-linux64*
+
+WORKDIR /app
+COPY . .
+
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install fastapi uvicorn selenium requests python-multipart
+
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

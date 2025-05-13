@@ -1,0 +1,17 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from video_downloader import extract_and_download_video
+
+app = FastAPI()
+
+class VideoRequest(BaseModel):
+    video_id: str
+    iframe_url: str
+
+@app.post("/extract-video")
+def extract_video(data: VideoRequest):
+    try:
+        result = extract_and_download_video(data.video_id, data.iframe_url)
+        return {"status": "success", **result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

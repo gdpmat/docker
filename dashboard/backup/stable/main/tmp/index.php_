@@ -1,0 +1,206 @@
+<?php
+// เปิดแสดงข้อผิดพลาดทั้งหมดเพื่อการแก้ไขปัญหา
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraping Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+    .form-signin {
+      width: 100%;
+      max-width: 330px;
+      padding: 15px;
+      margin: auto;
+      margin-top: 100px;
+    }
+    .form-signin input[type="text"] {
+      margin-bottom: -1px;
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    .form-signin input[type="password"] {
+      margin-bottom: 10px;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Login Form -->
+        <div id="login-section">
+            <div class="form-signin">
+                <h1 class="h3 mb-3 fw-normal text-center">กรุณาเข้าสู่ระบบ</h1>
+                
+                <div id="login-message" class="alert alert-danger d-none"></div>
+                
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="username" placeholder="ชื่อผู้ใช้" required>
+                    <label for="username">ชื่อผู้ใช้</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="password" class="form-control" id="password" placeholder="รหัสผ่าน" required>
+                    <label for="password">รหัสผ่าน</label>
+                </div>
+                
+                <button class="w-100 btn btn-lg btn-primary" id="login-button">เข้าสู่ระบบ</button>
+            </div>
+        </div>
+        
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="d-none">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2>Web Scraping Dashboard</h2>
+                        <button id="logout-button" class="btn btn-outline-danger">ออกจากระบบ</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h3>ยินดีต้อนรับ!</h3>
+                    <p>คุณได้เข้าสู่ระบบเรียบร้อยแล้ว</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">โพสต์ทั้งหมด</h5>
+                                    <h2>125</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">เว็บไซต์ทั้งหมด</h5>
+                                    <h2>8</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h4>เพิ่มข้อมูลใหม่</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <input type="url" class="form-control" id="scrape-url" placeholder="ระบุ URL ที่ต้องการเก็บข้อมูล" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-primary w-100" id="scrape-button">เก็บข้อมูล</button>
+                                </div>
+                            </div>
+                            <div id="scrape-result" class="mt-3 d-none"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Display debug info
+        console.log('Page loaded - checking login status');
+        
+        const loginSection = document.getElementById('login-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const loginMessage = document.getElementById('login-message');
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
+        const scrapeButton = document.getElementById('scrape-button');
+        const scrapeUrl = document.getElementById('scrape-url');
+        const scrapeResult = document.getElementById('scrape-result');
+        
+        // Check login status
+        checkLoginStatus();
+        
+        // Login button click event
+        loginButton.addEventListener('click', function() {
+            console.log('Login button clicked');
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === 'admin' && password === 'Man@1997') {
+                console.log('Login successful');
+                // Set login status
+                localStorage.setItem('isLoggedIn', 'true');
+                // Show dashboard
+                checkLoginStatus();
+            } else {
+                console.log('Login failed');
+                // Show error message
+                loginMessage.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+                loginMessage.classList.remove('d-none');
+            }
+        });
+        
+        // Logout button click event
+        logoutButton.addEventListener('click', function() {
+            console.log('Logout button clicked');
+            // Clear login status
+            localStorage.removeItem('isLoggedIn');
+            // Show login form
+            checkLoginStatus();
+        });
+        
+        // Scrape button click event
+        scrapeButton.addEventListener('click', function() {
+            console.log('Scrape button clicked');
+            const url = scrapeUrl.value;
+            
+            if (!url) {
+                scrapeResult.innerHTML = '<div class="alert alert-danger">กรุณาระบุ URL</div>';
+                scrapeResult.classList.remove('d-none');
+                return;
+            }
+            
+            // Show loading message
+            scrapeButton.disabled = true;
+            scrapeResult.innerHTML = '<div class="alert alert-info">กำลังดำเนินการ...</div>';
+            scrapeResult.classList.remove('d-none');
+            
+            // Simulate scraping process
+            setTimeout(function() {
+                scrapeResult.innerHTML = '<div class="alert alert-success">เก็บข้อมูลสำเร็จ!</div>';
+                scrapeUrl.value = '';
+                scrapeButton.disabled = false;
+                
+                // Hide result after 3 seconds
+                setTimeout(function() {
+                    scrapeResult.classList.add('d-none');
+                }, 3000);
+            }, 2000);
+        });
+        
+        // Function to check login status
+        function checkLoginStatus() {
+            console.log('Checking login status');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            console.log('Is logged in:', isLoggedIn);
+            
+            if (isLoggedIn) {
+                // Show dashboard
+                loginSection.classList.add('d-none');
+                dashboardSection.classList.remove('d-none');
+            } else {
+                // Show login form
+                loginSection.classList.remove('d-none');
+                dashboardSection.classList.add('d-none');
+                // Clear login message
+                loginMessage.classList.add('d-none');
+            }
+        }
+    });
+    </script>
+</body>
+</html>

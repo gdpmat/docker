@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraping Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+    /* Login Page Styles */
+    .form-signin {
+      width: 100%;
+      max-width: 330px;
+      padding: 15px;
+      margin: auto;
+      margin-top: 100px;
+    }
+    .form-signin .form-floating:focus-within {
+      z-index: 2;
+    }
+    .form-signin input[type="text"] {
+      margin-bottom: -1px;
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    .form-signin input[type="password"] {
+      margin-bottom: 10px;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+    
+    /* Dashboard Styles */
+    body {
+      font-size: .875rem;
+    }
+    
+    .feather {
+      width: 16px;
+      height: 16px;
+      vertical-align: text-bottom;
+    }
+    
+    .sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      padding: 48px 0 0;
+      box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    }
+    
+    @media (max-width: 767.98px) {
+      .sidebar {
+        top: 5rem;
+      }
+    }
+    
+    .sidebar-sticky {
+      position: relative;
+      top: 0;
+      height: calc(100vh - 48px);
+      padding-top: .5rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    
+    .sidebar .nav-link {
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .sidebar .nav-link.active {
+      color: #2470dc;
+    }
+    
+    .navbar-brand {
+      padding-top: .75rem;
+      padding-bottom: .75rem;
+      font-size: 1rem;
+      background-color: rgba(0, 0, 0, .25);
+      box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+    }
+    
+    .bi {
+      margin-right: 0.5rem;
+    }
+    
+    .card {
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      margin-bottom: 1rem;
+    }
+    
+    /* Hide dashboard initially */
+    #dashboard {
+      display: none;
+    }
+    </style>
+</head>
+<body>
+    <!-- Login Section -->
+    <div id="login-section">
+        <main class="form-signin">
+            <form id="login-form">
+                <h1 class="h3 mb-3 fw-normal">กรุณาเข้าสู่ระบบ</h1>
+                
+                <div id="login-alert" class="alert alert-danger d-none"></div>
+                
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="username" placeholder="ชื่อผู้ใช้" required>
+                    <label for="username">ชื่อผู้ใช้</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="password" class="form-control" id="password" placeholder="รหัสผ่าน" required>
+                    <label for="password">รหัสผ่าน</label>
+                </div>
+                
+                <button class="w-100 btn btn-lg btn-primary" type="submit">เข้าสู่ระบบ</button>
+                <p class="mt-5 mb-3 text-muted">&copy; 2025 Web Scraping Dashboard</p>
+            </form>
+        </main>
+    </div>
+    
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="d-none">
+        <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+            <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">Web Scraping Dashboard</a>
+            <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-nav">
+                <div class="nav-item text-nowrap">
+                    <a class="nav-link px-3" href="#" id="logout-btn">ออกจากระบบ</a>
+                </div>
+            </div>
+        </header>
+        
+        <div class="container-fluid">
+            <div class="row">
+                <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                    <div class="position-sticky pt-3">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" data-page="main-dashboard">
+                                    <i class="bi bi-speedometer2"></i>
+                                    แดชบอร์ด
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="posts">
+                                    <i class="bi bi-card-list"></i>
+                                    รายการโพสต์ทั้งหมด
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="search-replace">
+                                    <i class="bi bi-search"></i>
+                                    ค้นหาและแทนที่
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                    <div id="main-dashboard" class="dashboard-page">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">แดชบอร์ด</h1>
+                        </div>
+                        
+                        <!-- สรุปสถิติ -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-primary text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">โพสต์ทั้งหมด</h5>
+                                        <h2 id="total-posts">0</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">เว็บไซต์ทั้งหมด</h5>
+                                        <h2 id="total-sites">0</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-info text-white h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">โพสต์ใน 7 วัน</h5>
+                                        <h2 id="recent-posts">0</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ฟอร์มส่ง URL ไปยัง webhook -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h4>เพิ่มข้อมูลใหม่</h4>
+                            </div>
+                            <div class="card-body">
+                                <form id="scrape-form" class="row g-3">
+                                    <div class="col-md-9">
+                                        <input type="url" class="form-control" id="scrape-url" placeholder="ระบุ URL ที่ต้องการเก็บข้อมูล" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button type="submit" class="btn btn-primary w-100" id="scrape-button">เก็บข้อมูล</button>
+                                    </div>
+                                    <div id="scrape-result" class="col-12 d-none">
+                                        <div class="alert alert-info mt-3">กำลังดำเนินการเก็บข้อมูล...</div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- โพสต์ล่าสุด -->
+                        <h4>โพสต์ล่าสุด</h4>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Video ID</th>
+                                        <th>รูปภาพ</th>
+                                        <th>ชื่อเรื่อง</th>
+                                        <th>เว็บไซต์</th>
+                                        <th>วันที่</th>
+                                        <th>การจัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-posts-list">
+                                    <!-- โพสต์ล่าสุดจะถูกใส่ที่นี่ -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- หน้าโพสต์ทั้งหมด -->
+                    <div id="posts" class="dashboard-page d-none">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">รายการโพสต์ทั้งหมด</h1>
+                        </div>
+                        <p>หน้าแสดงรายการโพสต์ทั้งหมด (จะพัฒนาเพิ่มเติมในภายหลัง)</p>
+                    </div>
+                    
+                    <!-- หน้าค้นหาและแทนที่ -->
+                    <div id="search-replace" class="dashboard-page d-none">
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h1 class="h2">ค้นหาและแทนที่</h1>
+                        </div>
+                        <p>หน้าค้นหาและแทนที่ข้อความในฐานข้อมูล (จะพัฒนาเพิ่มเติมในภายหลัง)</p>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Functions for login
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if user is logged in
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            showDashboard();
+            loadDashboardData();
+        }
+        
+        // Login form submission
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === 'admin' && password === 'Man@1997') {
+                // Set login status
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('username', username);
+                
+                // Show dashboard
+                showDashboard();
+                loadDashboardData();
+            } else {
+                // Show error
+                const loginAlert = document.getElementById('login-alert');
+                loginAlert.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+                loginAlert.classList.remove('d-none');
+            }
+        });
+        
+        // Logout button
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('username');
+            hideDashboard();
+        });
+        
+        // Navigation
+        document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active link
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show corresponding page
+                const pageId = this.getAttribute('data-page');
+                document.querySelectorAll('.dashboard-page').forEach(page => {
+                    page.classList.add('d-none');
+                });
+                document.getElementById(pageId).classList.remove('d-none');
+            });
+        });
+        
+        // Scrape form submission
+        document.getElementById('scrape-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('scrape-url').value;
+            const scrapeButton = document.getElementById('scrape-button');
+            const scrapeResult = document.getElementById('scrape-result');
+            
+            // Show loading
+            scrapeButton.disabled = true;
+            scrapeButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> กำลังดำเนินการ...';
+            scrapeResult.classList.remove('d-none');
+            
+            // Call the webhook (example only)
+            setTimeout(() => {
+                // Simulate successful scraping
+                scrapeResult.innerHTML = '<div class="alert alert-success mt-3">เก็บข้อมูลสำเร็จ!</div>';
+                document.getElementById('scrape-url').value = '';
+                
+                // Re-enable button
+                scrapeButton.disabled = false;
+                scrapeButton.innerHTML = 'เก็บข้อมูล';
+                
+                // Hide result after 3 seconds
+                setTimeout(() => {
+                    scrapeResult.classList.add('d-none');
+                }, 3000);
+                
+                // Reload dashboard data (for demo)
+                loadDashboardData();
+            }, 2000);
+        });
+    });
+    
+    function showDashboard() {
+        document.getElementById('login-section').classList.add('d-none');
+        document.getElementById('dashboard').classList.remove('d-none');
+    }
+    
+    function hideDashboard() {
+        document.getElementById('login-section').classList.remove('d-none');
+        document.getElementById('dashboard').classList.add('d-none');
+    }
+    
+    function loadDashboardData() {
+        // Demo data - in a real app, you would fetch this from the API
+        document.getElementById('total-posts').textContent = '125';
+        document.getElementById('total-sites').textContent = '8';
+        document.getElementById('recent-posts').textContent = '37';
+        
+        // Demo recent posts
+        const recentPosts = [
+            { id: 1, video_id: '12345', title: 'ตัวอย่างโพสต์ 1', site_name: 'example.com', thumbnail_url: '', created_at: '2025-05-10 09:30:00' },
+            { id: 2, video_id: '12346', title: 'ตัวอย่างโพสต์ 2', site_name: 'example.org', thumbnail_url: '', created_at: '2025-05-09 15:45:00' },
+            { id: 3, video_id: '12347', title: 'ตัวอย่างโพสต์ 3', site_name: 'example.net', thumbnail_url: '', created_at: '2025-05-08 11:20:00' }
+        ];
+        
+        const recentPostsList = document.getElementById('recent-posts-list');
+        recentPostsList.innerHTML = '';
+        
+        recentPosts.forEach(post => {
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td>${post.video_id}</td>
+                <td>${post.thumbnail_url ? `<img src="${post.thumbnail_url}" alt="Thumbnail" class="img-thumbnail" style="max-width: 80px;">` : '<span class="text-muted">ไม่มีรูปภาพ</span>'}</td>
+                <td>${post.title}</td>
+                <td>${post.site_name}</td>
+                <td>${new Date(post.created_at).toLocaleString('th-TH')}</td>
+                <td>
+                    <button class="btn btn-sm btn-info">ดู</button>
+                    <button class="btn btn-sm btn-warning">แก้ไข</button>
+                </td>
+            `;
+            
+            recentPostsList.appendChild(row);
+        });
+    }
+    </script>
+</body>
+</html>
